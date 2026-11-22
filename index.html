@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HT Survival Calculator | BCLC Stage C HCC</title>
+<meta name="description" content="Interactive HT nomogram for estimating overall survival at 12, 24, and 36 months in BCLC stage C hepatocellular carcinoma.">
+<style>
+  :root{
+    --low:#07518E; --int:#E39A1F; --high:#D91E2B;
+    --ink:#1c2430; --muted:#6b7683; --line:#e3e7ec; --bg:#f6f7f9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+       font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 20px 48px}
+  h1{font-size:19px;margin:0 0 4px;font-weight:650;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:12.5px;margin:0 0 22px}
+  .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+  @media (max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 18px 16px;
+        box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .card h2{font-size:13px;margin:0 0 14px;color:var(--muted);font-weight:600;
+           letter-spacing:.6px;text-transform:uppercase}
+  .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .text-button{padding:0;border:0;background:none;color:var(--low);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .example{color:var(--muted);font-size:12.5px;margin:-6px 0 14px}
+  .row{margin-bottom:14px}
+  .row:last-child{margin-bottom:0}
+  label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  .seg button{flex:1 1 auto;min-width:64px;padding:7px 10px;border:1px solid var(--line);
+    background:#fff;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;
+    transition:.15s;font-family:inherit}
+  .seg button:hover{border-color:#c3cbd5}
+  .seg button[aria-pressed="true"]{background:#0f1720;color:#fff;border-color:#0f1720;font-weight:600}
+  .seg button:focus-visible,.text-button:focus-visible,summary:focus-visible,.ht-input button:focus-visible{outline:2px solid var(--low);outline-offset:2px}
+  .ht-input{margin-top:8px;font-size:12.5px}
+  .ht-input summary{color:var(--low);cursor:pointer}
+  .ht-input form{margin-top:8px}
+  .labs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .labs input{display:block;width:100%;min-height:36px;padding:5px 8px;border:1px solid #c3cbd5;border-radius:7px;color:var(--ink);font:inherit}
+  .ht-input button{margin-top:4px;padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+  .out{position:sticky;top:18px;align-self:start}
+  @media (max-width:860px){.out{position:static}}
+  .big{display:flex;align-items:baseline;gap:8px;margin:0 0 2px}
+  .big b{font-size:34px;font-weight:650;letter-spacing:-.5px}
+  .big span{color:var(--muted);font-size:12.5px}
+  table{width:100%;border-collapse:collapse;margin-top:14px}
+  th,td{text-align:left;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+  th{color:var(--muted);font-weight:500;font-size:12px}
+  td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600}
+  .bar{height:8px;border-radius:999px;background:#eef1f4;overflow:hidden;margin-top:10px}
+  .bar i{display:block;height:100%;width:0;transition:width .28s ease}
+  .note{color:var(--muted);font-size:11.5px;margin-top:16px;border-top:1px dashed var(--line);padding-top:12px}
+  .kv{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-top:10px}
+  .kv b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>HT Survival Calculator</h1>
+  <p class="sub">Barcelona Clinic Liver Cancer (BCLC) stage C hepatocellular carcinoma (HCC) · Overall survival at 12, 24, and 36 months</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-head">
+        <h2>Patient characteristics</h2>
+        <button type="button" class="text-button" id="clear">Clear inputs</button>
+      </div>
+      <p class="example" id="input-hint">Example values are preselected.</p>
+
+      <div class="row">
+        <label id="ht-label">HT score (1 point each for TK1 ≥ 2.35 U/L and HSP90α ≥ 143.5 ng/mL)</label>
+        <div class="seg" role="group" aria-labelledby="ht-label" data-key="ht"><button type="button" aria-pressed="false" data-v="0">0 points</button><button type="button" aria-pressed="false" data-v="1">1 point</button><button type="button" aria-pressed="false" data-v="2">2 points</button></div>
+        <details class="ht-input" id="ht-input">
+          <summary>Calculate HT from lab values</summary>
+          <form id="ht-form">
+            <div class="labs">
+              <label>Serum TK1 (U/L)<input id="tk1" type="number" min="0" step="any" required inputmode="decimal"></label>
+              <label>Plasma HSP90α (ng/mL)<input id="hsp90" type="number" min="0" step="any" required inputmode="decimal"></label>
+            </div>
+            <button type="submit">Apply HT score</button>
+          </form>
+        </details>
+      </div>
+
+      <div class="row">
+        <label id="child-label">Child–Pugh class</label>
+        <div class="seg" role="group" aria-labelledby="child-label" data-key="child"><button type="button" aria-pressed="false" data-v="0">Class A</button><button type="button" aria-pressed="false" data-v="1">Class B</button></div>
+      </div>
+
+      <div class="row">
+        <label id="albi-label">Albumin–bilirubin (ALBI) grade</label>
+        <div class="seg" role="group" aria-labelledby="albi-label" data-key="albi"><button type="button" aria-pressed="false" data-v="1">Grade 1</button><button type="button" aria-pressed="false" data-v="2">Grade 2</button><button type="button" aria-pressed="false" data-v="3">Grade 3</button></div>
+      </div>
+
+      <div class="row">
+        <label id="alp-label">Alkaline phosphatase (ALP)</label>
+        <div class="seg" role="group" aria-labelledby="alp-label" data-key="alp"><button type="button" aria-pressed="false" data-v="0">&lt; 125 U/L</button><button type="button" aria-pressed="false" data-v="1">≥ 125 U/L</button></div>
+      </div>
+
+      <div class="row">
+        <label id="mult-label">Tumor number</label>
+        <div class="seg" role="group" aria-labelledby="mult-label" data-key="mult"><button type="button" aria-pressed="false" data-v="1">Single</button><button type="button" aria-pressed="false" data-v="2">Multiple</button></div>
+      </div>
+
+      <div class="row">
+        <label id="size-label">Maximum tumor diameter</label>
+        <div class="seg" role="group" aria-labelledby="size-label" data-key="size"><button type="button" aria-pressed="false" data-v="1">&lt; 5 cm</button><button type="button" aria-pressed="false" data-v="2">5 to &lt; 10 cm</button><button type="button" aria-pressed="false" data-v="3">≥ 10 cm</button></div>
+      </div>
+    </div>
+
+    <div class="card out">
+      <h2>Predicted outcomes</h2>
+      <div class="big" aria-live="polite" aria-atomic="true"><b id="s24">—</b><span>24-month overall survival</span></div>
+      <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+
+      <table>
+        <tr><th>Time</th><th style="text-align:right">Survival</th><th style="text-align:right">Mortality risk</th></tr>
+        <tr><td>12 months</td><td class="n" id="s12">—</td><td class="n" id="d12">—</td></tr>
+        <tr><td>24 months</td><td class="n" id="s24b">—</td><td class="n" id="d24">—</td></tr>
+        <tr><td>36 months</td><td class="n" id="s36">—</td><td class="n" id="d36">—</td></tr>
+      </table>
+
+      <div class="kv"><span>Total nomogram points</span><b id="pts">—</b></div>
+      <div class="kv"><span>Risk group</span><b><span class="badge" id="grp" style="background:#8a94a0">—</span></b></div>
+
+      <p class="note">Risk groups by total points: low (≤ 113.44), intermediate (&gt; 113.44 to ≤ 172.37), and high (&gt; 172.37). Cutoffs are based on training cohort tertiles.
+      Estimates use the combined Cox model fitted in the training cohort and are intended for research and prognostic communication.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const BETA = {
+  child: {0: 0, 1: 0.5415047055963641},
+  albi:  {1: 0, 2: 0.03809106269955469, 3: 0.40635292903794684},
+  alp:   {0: 0, 1: 0.3342687673541301},
+  mult:  {1: 0, 2: 0.42273103107524584},
+  size:  {1: 0, 2: 0.33096867460328083, 3: 0.2525850057018704},
+  ht:    {0: 0, 1: 0.5873922542587642, 2: 1.0305538916631896}
+};
+const H0 = {12: 0.14957181892101762, 24: 0.2578178362728149, 36: 0.31449517630168033};
+const MAXB = 1.0305538916631896;
+const CUT = {low: 113.44, high: 172.37};
+const COL = {low: "#07518E", int: "#E39A1F", high: "#D91E2B", none: "#8a94a0"};
+const HT_CUT = {tk1: 2.35, hsp90: 143.5};
+
+const state = {ht: null, child: null, albi: null, alp: null, mult: null, size: null};
+const inputHint = document.getElementById('input-hint');
+
+document.querySelectorAll('.seg').forEach(seg => {
+  const key = seg.dataset.key;
+  seg.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state[key] = Number(btn.dataset.v);
+      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn));
+      inputHint.textContent = Object.values(state).includes(null)
+        ? 'Choose one option for each of the six characteristics.'
+        : 'Change any selection to update the estimates.';
+      render();
+    });
+  });
+});
+
+const pct = x => (100 * x).toFixed(1) + '%';
+
+function render(){
+  const keys = Object.keys(state);
+  const g = document.getElementById('grp');
+  const bar = document.getElementById('bar');
+  if (keys.some(k => state[k] === null)) {
+    for (const id of ['s12', 'd12', 's24', 's24b', 'd24', 's36', 'd36', 'pts', 'grp']) {
+      document.getElementById(id).textContent = '—';
+    }
+    g.style.background = COL.none;
+    bar.style.width = '0';
+    return;
+  }
+  let lp = 0;
+  for (const k of keys) lp += BETA[k][state[k]] || 0;
+  const pts = lp * 100 / MAXB;
+  const grp = pts <= CUT.low ? 'low' : (pts <= CUT.high ? 'int' : 'high');
+  const label = {low: 'Low risk', int: 'Intermediate risk', high: 'High risk'}[grp];
+
+  const s = {};
+  for (const h of [12,24,36]) s[h] = Math.exp(-H0[h] * Math.exp(lp));
+
+  document.getElementById('s12').textContent = pct(s[12]);
+  document.getElementById('d12').textContent = pct(1 - s[12]);
+  document.getElementById('s24').textContent = pct(s[24]);
+  document.getElementById('s24b').textContent = pct(s[24]);
+  document.getElementById('d24').textContent = pct(1 - s[24]);
+  document.getElementById('s36').textContent = pct(s[36]);
+  document.getElementById('d36').textContent = pct(1 - s[36]);
+  document.getElementById('pts').textContent = pts.toFixed(2);
+  g.textContent = label; g.style.background = COL[grp];
+  bar.style.width = (100 * s[24]).toFixed(1) + '%';
+  bar.style.background = COL[grp];
+}
+
+// Load the example patient profile.
+[['ht',1],['child',0],['albi',2],['alp',1],['mult',2],['size',2]].forEach(([k,v]) => {
+  const seg = document.querySelector(`.seg[data-key="${k}"]`);
+  const btn = seg.querySelector(`button[data-v="${v}"]`);
+  btn.click();
+});
+inputHint.textContent = 'Example values are preselected.';
+
+const labForm = document.getElementById('ht-form');
+labForm.addEventListener('submit', event => {
+  event.preventDefault();
+  if (!labForm.reportValidity()) return;
+  const tk1 = document.getElementById('tk1').valueAsNumber;
+  const hsp90 = document.getElementById('hsp90').valueAsNumber;
+  const score = Number(tk1 >= HT_CUT.tk1) + Number(hsp90 >= HT_CUT.hsp90);
+  const selected = document.querySelector('.seg[data-key="ht"]').querySelector(`button[data-v="${score}"]`);
+  selected.click();
+  labForm.reset();
+  document.getElementById('ht-input').open = false;
+  selected.focus();
+});
+
+document.getElementById('clear').addEventListener('click', () => {
+  for (const key of Object.keys(state)) state[key] = null;
+  document.querySelectorAll('.seg button').forEach(button => button.setAttribute('aria-pressed', 'false'));
+  labForm.reset();
+  inputHint.textContent = 'Choose one option for each of the six characteristics.';
+  render();
+});
+</script>
+</body>
+</html>

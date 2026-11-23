@@ -7,7 +7,7 @@
 <meta name="description" content="Interactive HT nomogram for estimating overall survival at 12, 24, and 36 months in BCLC stage C hepatocellular carcinoma.">
 <style>
   :root{
-    --link:#07518E;
+    --low:#07518E; --int:#E39A1F; --high:#D91E2B;
     --ink:#1c2430; --muted:#6b7683; --line:#e3e7ec; --bg:#f6f7f9;
   }
   *{box-sizing:border-box}
@@ -24,7 +24,7 @@
   .card h2{font-size:13px;margin:0 0 14px;color:var(--muted);font-weight:600;
            letter-spacing:.6px;text-transform:uppercase}
   .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-  .text-button{padding:0;border:0;background:none;color:var(--link);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .text-button{padding:0;border:0;background:none;color:var(--low);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
   .example{color:var(--muted);font-size:12.5px;margin:-6px 0 14px}
   .row{margin-bottom:14px}
   .row:last-child{margin-bottom:0}
@@ -35,9 +35,9 @@
     transition:.15s;font-family:inherit}
   .seg button:hover{border-color:#c3cbd5}
   .seg button[aria-pressed="true"]{background:#0f1720;color:#fff;border-color:#0f1720;font-weight:600}
-  .seg button:focus-visible,.text-button:focus-visible,summary:focus-visible,.ht-input button:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+  .seg button:focus-visible,.text-button:focus-visible,summary:focus-visible,.ht-input button:focus-visible{outline:2px solid var(--low);outline-offset:2px}
   .ht-input{margin-top:8px;font-size:12.5px}
-  .ht-input summary{color:var(--link);cursor:pointer}
+  .ht-input summary{color:var(--low);cursor:pointer}
   .ht-input form{margin-top:8px}
   .labs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .labs input{display:block;width:100%;min-height:36px;padding:5px 8px;border:1px solid #c3cbd5;border-radius:7px;color:var(--ink);font:inherit}
@@ -52,7 +52,6 @@
   th{color:var(--muted);font-weight:500;font-size:12px}
   td.n{text-align:right;font-variant-numeric:tabular-nums}
   .badge{display:inline-block;padding:3px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600}
-  .badge[data-risk]::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;background:var(--risk-accent);box-shadow:inset 0 0 0 1px var(--risk-edge)}
   .bar{height:8px;border-radius:999px;background:#eef1f4;overflow:hidden;margin-top:10px}
   .bar i{display:block;height:100%;width:0;transition:width .28s ease}
   .note{color:var(--muted);font-size:11.5px;margin-top:16px;border-top:1px dashed var(--line);padding-top:12px}
@@ -62,10 +61,10 @@
   .km-head,.km-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 12px}
   .km-head h2{margin:0;font-size:16px;text-transform:none;color:var(--ink);letter-spacing:0}
   .km-head select{font:inherit;font-size:12px;padding:5px 7px;border:1px solid #c3cbd5;border-radius:6px;background:white;color:var(--ink)}
-  .km-head select:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+  .km-head select:focus-visible{outline:2px solid var(--low);outline-offset:2px}
   .km-meta{margin:7px 0 2px;font-size:12px;color:#46535c}
   .km-key{display:inline-flex;gap:6px;align-items:center}
-  .km-key svg{width:24px;height:10px;flex:none}
+  .km-key i{display:inline-block;width:22px;height:8px;background:var(--km-wash);border-bottom:2px solid var(--km-color)}
   .km-svg{display:block;width:100%;height:auto;max-height:235px;font-family:inherit;overflow:visible}
   .km-svg text{fill:#45535a;font-size:12px}
   .km-svg .axis-label{font-size:13px;fill:#25323a}
@@ -145,7 +144,7 @@
         <div id="km-empty" class="km-empty" hidden>Complete the patient characteristics to see the corresponding risk group.</div>
         <div id="km-display" hidden>
           <div class="km-meta">
-            <span class="km-key"><svg viewBox="0 0 24 10" aria-hidden="true"><rect width="24" height="10" fill="var(--km-wash)"></rect><path d="M0 6.5 H24" stroke="var(--km-edge)" stroke-width="3.2" stroke-dasharray="var(--km-dash)"></path><path d="M0 6.5 H24" stroke="var(--km-color)" stroke-width="2" stroke-dasharray="var(--km-dash)"></path></svg><strong id="km-group"></strong></span>
+            <span class="km-key"><i aria-hidden="true"></i><strong id="km-group"></strong></span>
             <span>Kaplan–Meier estimate (95% CI)</span>
           </div>
           <svg id="km-chart" class="km-svg" viewBox="0 0 510 224" role="img" aria-labelledby="km-title km-desc">
@@ -153,7 +152,6 @@
             <desc id="km-desc"></desc>
             <g id="km-grid"></g>
             <path id="km-band" stroke="none"></path>
-            <path id="km-outline" fill="none" stroke-width="3.2" stroke-linejoin="round" aria-hidden="true"></path>
             <path id="km-line" fill="none" stroke-width="2" stroke-linejoin="round"></path>
             <g id="km-axes"></g>
             <g id="km-at-risk"></g>
@@ -195,10 +193,8 @@ const BETA = {
 const H0 = {12: 0.14957181892101762, 24: 0.2578178362728149, 36: 0.31449517630168033};
 const MAXB = 1.0305538916631896;
 const CUT = {low: 113.44, high: 172.37};
-const COL = {low: "#00B050", int: "#FFFF00", high: "#FF0000", none: "#8a94a0"};
-const TINT = {low: "#E3F4E9", int: "#FFF9BB", high: "#FFE5E3"};
-const EDGE = {low: "#157345", int: "#916E00", high: "#AC2928"};
-const BADGE_TEXT = {low: "#155B35", int: "#5C4900", high: "#932A27"};
+const COL = {low: "#8AB7E9", int: "#808080", high: "#103F32", none: "#8a94a0"};
+const TINT = {low: "#e8f1fb", int: "#ebebeb", high: "#e1ebe6"};
 const RISK_NAMES = {low: "Low risk", int: "Intermediate risk", high: "High risk"};
 const HT_CUT = {tk1: 2.35, hsp90: 143.5};
 
@@ -269,23 +265,15 @@ function showKm(group) {
   const reference = km.cohorts[cohortPicker.value][group === 'int' ? 'intermediate' : group];
   const {curve, n, atRisk} = reference;
   const line = document.getElementById('km-line');
-  const outline = document.getElementById('km-outline');
   const band = document.getElementById('km-band');
-  const path = 'M' + stepVertices(curve, 1).join(' L');
-  const dash = group === 'high' ? '5 3' : 'none';
-  line.setAttribute('d', path);
-  outline.setAttribute('d', path);
-  outline.setAttribute('stroke', EDGE[group]);
-  outline.setAttribute('stroke-dasharray', dash);
+  line.setAttribute('d', 'M' + stepVertices(curve, 1).join(' L'));
   line.setAttribute('stroke', COL[group]);
-  line.setAttribute('stroke-dasharray', dash);
+  line.setAttribute('stroke-dasharray', group === 'high' ? '5 3' : 'none');
   band.setAttribute('d', 'M' + stepVertices(curve, 3).concat(stepVertices(curve, 2).reverse()).join(' L') + ' Z');
   band.setAttribute('fill', COL[group]);
   band.setAttribute('fill-opacity', '0.16');
   chartArea.style.setProperty('--km-color', COL[group]);
   chartArea.style.setProperty('--km-wash', TINT[group]);
-  chartArea.style.setProperty('--km-edge', EDGE[group]);
-  chartArea.style.setProperty('--km-dash', dash);
   document.getElementById('km-group').textContent = RISK_NAMES[group] + ' (n = ' + n + ')';
   const at24 = curve.filter(row => row[0] <= 24).at(-1);
   document.getElementById('km-desc').textContent = cohortPicker.selectedOptions[0].text +
@@ -308,7 +296,6 @@ function render(){
     }
     g.style.background = COL.none;
     g.style.color = '#fff';
-    delete g.dataset.risk;
     bar.style.width = '0';
     showKm(null);
     return;
@@ -331,13 +318,9 @@ function render(){
   document.getElementById('d36').textContent = pct(1 - s[36]);
   document.getElementById('pts').textContent = pts.toFixed(2);
   g.textContent = label; g.style.background = TINT[grp];
-  g.style.color = BADGE_TEXT[grp];
-  g.dataset.risk = grp;
-  g.style.setProperty('--risk-accent', COL[grp]);
-  g.style.setProperty('--risk-edge', EDGE[grp]);
+  g.style.color = {low:'#27557e', int:'#444', high:COL.high}[grp];
   bar.style.width = (100 * s[24]).toFixed(1) + '%';
   bar.style.background = COL[grp];
-  bar.style.boxShadow = 'inset 0 0 0 1px ' + EDGE[grp];
   showKm(grp);
 }
 
